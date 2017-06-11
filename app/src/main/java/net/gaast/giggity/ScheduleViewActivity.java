@@ -32,13 +32,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.net.UrlQuerySanitizer;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -60,8 +56,6 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.text.Format;
 import java.text.SimpleDateFormat;
@@ -75,11 +69,11 @@ public class ScheduleViewActivity extends Activity {
 	protected Giggity app;
 
 	private final static int VIEWS[] = {
-		R.id.block_schedule,
-		R.id.timetable,
-		R.id.now_next,
-		R.id.my_events,
-		R.id.tracks,
+			R.id.block_schedule,
+			R.id.timetable,
+			R.id.now_next,
+			R.id.my_events,
+			R.id.tracks,
 	};
 
 	private int curView;
