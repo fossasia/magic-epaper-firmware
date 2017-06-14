@@ -241,7 +241,7 @@ public class Db {
 		CACHED,			/* Cached copy, or refetch if missing. */
 		ONLINE,			/* Poll for an update. */
 	}
-	private final String SEED_URL = "https://raw.githubusercontent.com/heysadboy/open-event-giggity/master/raw/JSON";
+	private final String SEED_URL = "https://raw.githubusercontent.com/heysadboy/open-event-apps/master/raw/JSON";
 	public static final long SEED_FETCH_INTERVAL = 86400 * 1000; /* Once a day. */
 
 	private Seed loadSeed(SeedSource source) {
