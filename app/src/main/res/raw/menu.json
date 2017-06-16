@@ -1,5 +1,5 @@
 {
-	"version": 2017060900,
+	"version": 2017061400,
 	"schedules": [
 		{
 			"version": 2016062701,
@@ -384,6 +384,25 @@
 					{
 						"url": "http://www.tuebix.org/anfahrt/",
 						"title": "Anfahrt"
+					}
+				]
+			}
+		},
+		{
+			"version": 2017061400,
+			"url": "https://program.sha2017.org/schedule.xml",
+			"title": "SHA2017",
+			"start": "2017-08-04",
+			"end": "2017-08-08",
+			"metadata": {
+				"links": [
+					{
+						"url": "https://sha2017.org/",
+						"title": "Website"
+					},
+					{
+						"url": "https://wiki.sha2017.org/w/Main_Page",
+						"title": "Wiki"
 					}
 				]
 			}
