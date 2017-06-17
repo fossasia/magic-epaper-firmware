@@ -63,17 +63,17 @@ public class Db {
 		pref = PreferenceManager.getDefaultSharedPreferences(app);
 		dbh = new Helper(app_, "giggity", null, dbVersion);
 	}
-
+	
 	public Connection getConnection() {
 		Log.i("DeoxideDb", "Created database connection");
 		return new Connection();
 	}
-
+	
 	private class Helper extends SQLiteOpenHelper {
 		public Helper(Context context, String name, CursorFactory factory,
-					  int version) {
+				int version) {
 			super(context, name, factory, version);
-
+			
 			if (oldDbVer < dbVersion) {
 				SQLiteDatabase db = getWritableDatabase();
 				db.acquireReference();
@@ -81,30 +81,30 @@ public class Db {
 				db.releaseReference();
 			}
 		}
-
+	
 		@Override
 		public void onCreate(SQLiteDatabase db) {
 			Log.i("DeoxideDb", "Creating new database");
 			db.execSQL("Create Table schedule (sch_id Integer Primary Key AutoIncrement Not Null, " +
-					"sch_title VarChar(128), " +
-					"sch_url VarChar(256), " +
-					"sch_atime Integer, " +
-					"sch_rtime Integer, " +
-					"sch_start Integer, " +
-					"sch_end Integer, " +
-					"sch_id_s VarChar(128), " +
-					"sch_metadata VarChar(10240), " +
-					"sch_day Integer)");
+			                                  "sch_title VarChar(128), " +
+			                                  "sch_url VarChar(256), " +
+			                                  "sch_atime Integer, " +
+			                                  "sch_rtime Integer, " +
+			                                  "sch_start Integer, " +
+			                                  "sch_end Integer, " +
+			                                  "sch_id_s VarChar(128), " +
+			                                  "sch_metadata VarChar(10240), " +
+			                                  "sch_day Integer)");
 			db.execSQL("Create Table schedule_item (sci_id Integer Primary Key AutoIncrement Not Null, " +
-					"sci_sch_id Integer Not Null, " +
-					"sci_id_s VarChar(128), " +
-					"sci_remind Boolean, " +
-					"sci_hidden Boolean, " +
-					"sci_stars Integer(2) Null)");
-
+			                                       "sci_sch_id Integer Not Null, " +
+			                                       "sci_id_s VarChar(128), " +
+			                                       "sci_remind Boolean, " +
+			                                       "sci_hidden Boolean, " +
+			                                       "sci_stars Integer(2) Null)");
+			
 			oldDbVer = 0;
 		}
-
+	
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			int v = oldVersion;
@@ -146,11 +146,11 @@ public class Db {
 					}
 				}
 			}
-
+			
 			oldDbVer = Math.min(oldDbVer, oldVersion);
 		}
 	}
-
+	
 	/* For ease of use, seed the main menu with some known schedules. */
 	public void updateData(SQLiteDatabase db, boolean online) {
 		Seed seed = loadSeed(online ? SeedSource.ONLINE : SeedSource.CACHED);
@@ -170,19 +170,19 @@ public class Db {
 		}
 
 		int version = pref.getInt("last_menu_seed_version", 0), newver = version;
-
+		
 		if (seed.version <= version && oldDbVer == dbVersion) {
 			/* No updates required, both data and structure are up to date. */
 			Log.d("DeoxideDb.updateData", "Already up to date: " + version + " " + oldDbVer);
 			return;
 		}
-
+		
 		long ts = new Date().getTime() / 1000;
 		for (Seed.Schedule sched : seed.schedules) {
 			newver = Math.max(newver, sched.version);
 			updateSchedule(db, sched, version);
 		}
-
+		
 		if (newver != version) {
 			Editor p = pref.edit();
 			p.putInt("last_menu_seed_version", newver);
@@ -241,9 +241,9 @@ public class Db {
 		CACHED,			/* Cached copy, or refetch if missing. */
 		ONLINE,			/* Poll for an update. */
 	}
-	private final String SEED_URL = "https://raw.githubusercontent.com/heysadboy/open-event-apps/master/raw/JSON";
+	private final String SEED_URL = "https://wilmer.gaa.st/deoxide/menu.json";
 	public static final long SEED_FETCH_INTERVAL = 86400 * 1000; /* Once a day. */
-
+	
 	private Seed loadSeed(SeedSource source) {
 		String json = "";
 		JSONObject jso;
@@ -256,7 +256,7 @@ public class Db {
 				json = sw.toString();
 			} else {
 				f = app.fetch(SEED_URL, source == SeedSource.ONLINE ?
-						Fetcher.Source.ONLINE : Fetcher.Source.CACHE_ONLINE);
+				                        Fetcher.Source.ONLINE : Fetcher.Source.CACHE_ONLINE);
 				json = f.slurp();
 			}
 		} catch (IOException e) {
@@ -279,7 +279,7 @@ public class Db {
 			return null;
 		}
 	}
-
+	
 	/**
 	 * Instead of using gson, I'm using this little class to contain all the JSON logic.
 	 * Feed it a JSONObject and if it's well-formed, it'll contain all the menu seed info
@@ -287,10 +287,10 @@ public class Db {
 	private static class Seed {
 		int version;
 		LinkedList<Seed.Schedule> schedules;
-
+		
 		public Seed(JSONObject jso) throws JSONException {
 			version = jso.getInt("version");
-
+			
 			schedules = new LinkedList<Seed.Schedule>();
 			JSONArray scheds = jso.getJSONArray("schedules");
 			int i;
@@ -299,7 +299,7 @@ public class Db {
 				schedules.add(new Schedule(sched));
 			}
 		}
-
+		
 		private static class Schedule {
 			int version;
 			String id, url, title;
@@ -308,7 +308,7 @@ public class Db {
 			// info like extra links to for example room maps, and other stuff I may think of. Would
 			// be even nicer if (some of) this could become part of the Pentabarf spec..
 			String metadata;
-
+			
 			public Schedule(JSONObject jso) throws JSONException {
 				version = jso.getInt("version");
 				if (jso.has("id"))
@@ -321,7 +321,7 @@ public class Db {
 				} else {
 					metadata = "";
 				}
-
+				
 				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 				try {
 					start = df.parse(jso.getString("start"));
@@ -337,25 +337,25 @@ public class Db {
 			}
 		}
 	}
-
+	
 	public class Connection {
 		private SQLiteDatabase db;
 		private Schedule sched;
 
 		private HashMap<String,Long> sciIdMap;
 		private long schId;
-
+		
 		private int day;
 		private String metadata;
-
+		
 		public Connection() {
 			resume();
 		}
-
+		
 		protected void finalize() {
 			sleep();
 		}
-
+		
 		private void sleep() {
 			/*
 			Log.d("db", "sleep" + db);
@@ -365,7 +365,7 @@ public class Db {
 				db.releaseReference();
 			db = null;
 		}
-
+		
 		private void resume() {
 			if (db == null || !db.isOpen() || db.isReadOnly()) {
 				db = dbh.getWritableDatabase();
@@ -378,11 +378,11 @@ public class Db {
 			Log.d("myapp", Log.getStackTraceString(new Exception()));
 			*/
 		}
-
+		
 		public void setSchedule(Schedule sched_, String url, boolean fresh) {
 			ContentValues row;
 			Cursor q;
-
+			
 			sched = sched_;
 			sciIdMap = new HashMap<String,Long>();
 
@@ -395,11 +395,11 @@ public class Db {
 			row.put("sch_end", sched.getLastTime().getTime() / 1000);
 			if (fresh)
 				row.put("sch_rtime", new Date().getTime() / 1000);
-
+			
 			resume();
 			q = db.rawQuery("Select sch_id, sch_day, sch_metadata From schedule Where sch_id_s = ?",
-					new String[]{sched.getId()});
-
+			                new String[]{sched.getId()});
+			
 			if (q.getCount() == 0) {
 				row.put("sch_day", 0);
 				schId = db.insert("schedule", null, row);
@@ -410,23 +410,23 @@ public class Db {
 				day = (int) q.getLong(1);
 				Log.d("metadata", "" + q.getString(2));
 				metadata = q.getString(2);
-
+				
 				db.update("schedule", row, "sch_id = ?", new String[]{"" + schId});
 			} else {
 				Log.e("DeoxideDb", "Database corrupted");
 			}
 			Log.i("DeoxideDb", "schedId: " + schId);
 			q.close();
-
+			
 			q = db.rawQuery("Select sci_id, sci_id_s, sci_remind, sci_hidden, sci_stars " +
-							"From schedule_item Where sci_sch_id = ?",
-					new String[]{"" + schId});
+			                "From schedule_item Where sci_sch_id = ?",
+			                new String[]{"" + schId});
 			while (q.moveToNext()) {
 				Schedule.Item item = sched.getItem(q.getString(1));
 				if (item == null) {
 					/* ZOMGWTF D: */
 					Log.e("DeoxideDb", "Db has info about missing schedule item " +
-							q.getString(1) + " remind " + q.getInt(2) + " stars " + q.getInt(4) + " hidden " + q.getInt(3));
+					      q.getString(1) + " remind " + q.getInt(2) + " stars " + q.getInt(4) + " hidden " + q.getInt(3));
 					continue;
 				}
 
@@ -438,30 +438,30 @@ public class Db {
 			q.close();
 			sleep();
 		}
-
+		
 		public void saveScheduleItem(Schedule.Item item) {
 			ContentValues row = new ContentValues();
 			Long sciId;
-
+			
 			row.put("sci_sch_id", schId);
 			row.put("sci_id_s", item.getId());
 			row.put("sci_remind", item.getRemind());
 			row.put("sci_hidden", item.isHidden());
 			row.put("sci_stars", item.getStars());
-
+			
 			Log.d("DeoxideDb", "Saving item " + item.getTitle() + " remind " + row.getAsString("sci_remind") +
-					" stars " + row.getAsString("sci_stars") + " hidden " + row.getAsString("sci_hidden"));
-
+			                   " stars " + row.getAsString("sci_stars") + " hidden " + row.getAsString("sci_hidden"));
+			
 			resume();
 			if ((sciId = sciIdMap.get(item.getId())) != null) {
 				db.update("schedule_item", row,
-						"sci_id = ?", new String[]{"" + sciId.longValue()});
+						  "sci_id = ?", new String[]{"" + sciId.longValue()});
 			} else {
 				sciIdMap.put(item.getId(), db.insert("schedule_item", null, row));
 			}
 			sleep();
 		}
-
+		
 		public ArrayList<DbSchedule> getScheduleList() {
 			ArrayList<DbSchedule> ret = new ArrayList<DbSchedule>();
 			Cursor q;
@@ -473,10 +473,10 @@ public class Db {
 			}
 			q.close();
 			sleep();
-
+			
 			return ret;
 		}
-
+		
 		public void refreshScheduleList() {
 			resume();
 			updateData(db, true);
@@ -525,15 +525,15 @@ public class Db {
 			sleep();
 			return true;
 		}
-
+		
 		public int getDay() {
 			return day;
 		}
-
+		
 		public void setDay(int day_) {
 			day = day_;
 			ContentValues row;
-
+			
 			resume();
 			row = new ContentValues();
 			row.put("sch_day", day);
@@ -555,21 +555,21 @@ public class Db {
 			q.close();
 			sleep();
 		}
-
+		
 		private void flushHidden(int id) {
 			resume();
 			db.execSQL("Update schedule_item Set sci_hidden = 0 Where sci_sch_id = ?", new String[] {"" + id});
 			sleep();
 		}
 	}
-
+	
 	public class DbSchedule {
 		private int id_n;
 		private String url, id, title;
 		private Date start, end, atime, rtime;
 
 		public DbSchedule(Cursor q) {
-			id_n = q.getInt(q.getColumnIndexOrThrow("sch_id"));
+			id_n = q.getInt(q.getColumnIndexOrThrow("sch_id")); 
 			url = q.getString(q.getColumnIndexOrThrow("sch_url"));
 			id = q.getString(q.getColumnIndexOrThrow("sch_id_s"));
 			title = q.getString(q.getColumnIndexOrThrow("sch_title"));
@@ -578,34 +578,34 @@ public class Db {
 			atime = new Date(q.getLong(q.getColumnIndexOrThrow("sch_atime")) * 1000);
 			rtime = new Date(q.getLong(q.getColumnIndexOrThrow("sch_rtime")) * 1000);
 		}
-
+		
 		public String getUrl() {
 			return url;
 		}
-
+		
 		public String getId() {
 			return id;
 		}
-
+		
 		public String getTitle() {
 			if (title != null)
 				return title;
 			else
 				return url;
 		}
-
+		
 		public Date getStart() {
 			return start;
 		}
-
+		
 		public Date getEnd() {
 			return end;
 		}
-
+		
 		public Date getAtime() {
 			return atime;
 		}
-
+		
 		public Date getRtime() {
 			return rtime;
 		}

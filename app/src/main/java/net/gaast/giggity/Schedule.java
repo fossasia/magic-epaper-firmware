@@ -24,6 +24,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.support.v4.util.Pair;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
@@ -299,7 +300,7 @@ public class Schedule {
         }
 
 		/* Yeah, I know this is ugly, and actually reasonably fragile. For now it
-		 * just seems somewhat more efficient than doing something smarter, and
+         * just seems somewhat more efficient than doing something smarter, and
 		 * I want to avoid doing XML-specific stuff here already. */
         try {
             if (head.contains("<icalendar") && head.contains("<vcalendar")) {
@@ -373,8 +374,8 @@ public class Schedule {
     }
 
     private void loadIcal(BufferedReader in) {
-		/* Luckily the structure of iCal maps pretty well to its xCal counterpart.
-		 * That's what this function does.
+        /* Luckily the structure of iCal maps pretty well to its xCal counterpart.
+         * That's what this function does.
 		 * Tested against http://yapceurope.lv/ye2011/timetable.ics and the FOSDEM
 		 * 2011 iCal export (but please don't use this unless the event offers
 		 * nothing else). */
@@ -386,7 +387,7 @@ public class Schedule {
                 s = in.readLine();
                 if (s != null && s.startsWith(" ")) {
                     line += s.substring(1);
-					/* Line continuation. Get the rest before we process anything. */
+                    /* Line continuation. Get the rest before we process anything. */
                     continue;
                 } else if (line.contains(":")) {
                     String split[] = line.split(":", 2);
@@ -394,8 +395,8 @@ public class Schedule {
                     key = split[0].toLowerCase();
                     value = split[1];
                     if (key.equals("begin")) {
-						/* Some blocks (including vevent, the only one we need)
-						 * have proper begin:vevent and end:vevent dividers. */
+                        /* Some blocks (including vevent, the only one we need)
+                         * have proper begin:vevent and end:vevent dividers. */
                         p.startElement("", value.toLowerCase(), "", null);
                     } else if (key.equals("end")) {
                         p.endElement("", value.toLowerCase(), "");
@@ -446,11 +447,52 @@ public class Schedule {
             JSONObject conference = new JSONObject(output);
             int i;
 
+            //Using this title name so the user doesn't see URL when she clicks back
+            title = conference.getString("name");
+
+            if (conference.has("logo")) {
+                icon = conference.getString("logo");
+            }
+
+            if (conference.has("social_links")) {
+                links = new LinkedList<>();
+                JSONArray linklist = conference.getJSONArray("social_links");
+                for (i = 0; i < linklist.length(); ++i) {
+                    JSONObject link = linklist.getJSONObject(i);
+                    Schedule.Link slink = new Link(link.getString("link"), link.getString("name"));
+                    slink.setType(link.optString("type", null));
+                    links.addLast(slink);
+                }
+
+                //Adding website separately because it is not in social_links
+                if (conference.has("event_url")) {
+                    Schedule.Link slink = new Link(conference.getString("event_url"), "Website");
+                    links.addLast(slink);
+                }
+
+
+                //Adding website separately because it is not in social_links
+                if (conference.has("ticket_url")) {
+                    Schedule.Link slink = new Link(conference.getString("ticket_url"), "Ticket URL");
+                    links.addLast(slink);
+                }
+
+            }
+
+            //Getting microlocations to add latitude and longitude
+            JSONArray microlocations = conference.getJSONArray("microlocations");
+
+            //An array of pairs to have locations as key and latitude and longitude as value
+            HashMap<String, String> locs = new HashMap<>();
+            for (i = 0; i < microlocations.length(); i++) {
+
+                JSONObject room = microlocations.getJSONObject(i);
+                locs.put(room.getString("name"), room.getString("longitude") + "," + room.getString("latitude"));
+            }
+
+
             //The sessions are contained in the array present in an object
             JSONArray events = conference.getJSONArray("sessions");
-
-            //Using this title name so the user doesn't see URL when he clicks back
-            title = conference.getString("name");
 
             for (i = 0; i < events.length(); i++) {
 
@@ -480,6 +522,27 @@ public class Schedule {
                     tents.add(line);
                     tentMap.put(location, line);
                 }
+
+                //Getting value (latitude and longitude) from the map by key (name)
+                String locString = locs.get(line.getTitle());
+                String latitude = locString.substring(0, locString.indexOf(','));
+                String longitude = locString.substring(locString.indexOf(',') + 1);
+
+                //Adding location details here
+                String latlon = null;
+                try {
+                    latlon = ("geo:0,0?q=" + longitude + "," +
+                            latitude + "(" +
+                            URLEncoder.encode(line.getTitle(), "utf-8") + ")");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+
+
+                if (latlon != null) {
+                    line.setLocation(latlon);
+                }
+
                 line.addItem(item);
             }
 
@@ -1440,6 +1503,10 @@ public class Schedule {
 
         public String getLocation() {
             return location;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
         }
     }
 
