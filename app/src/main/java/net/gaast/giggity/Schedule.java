@@ -428,11 +428,12 @@ public class Schedule {
 
     /*Reading the JSON open event format data fetched from the API end point*/
     private void loadJson(BufferedReader in) {
-
         StringBuffer buffer = new StringBuffer();
         SimpleDateFormat df = new SimpleDateFormat();
         HashMap<String, Schedule.Line> tentMap = new HashMap<String, Schedule.Line>();
+        Boolean hasMicrolocs = false;
         Scanner s = new Scanner(in);
+        HashMap<String, String> locs = new HashMap<>();
 
         while (s.hasNext()) {
             buffer.append(s.nextLine());
@@ -454,8 +455,22 @@ public class Schedule {
                 icon = conference.getString("logo");
             }
 
+            links = new LinkedList<>();
+
+            //Adding website separately because it is not in social_links
+            if (conference.has("event_url")) {
+                Schedule.Link slink = new Link(conference.getString("event_url"), "Website");
+                links.addLast(slink);
+            }
+
+            //Adding ticket url separately because it is not in social_links
+            if (conference.has("ticket_url")) {
+                Schedule.Link slink = new Link(conference.getString("ticket_url"), "Ticket URL");
+                links.addLast(slink);
+            }
+
+            //Using social links of the event like facebook, google+, etc.
             if (conference.has("social_links")) {
-                links = new LinkedList<>();
                 JSONArray linklist = conference.getJSONArray("social_links");
                 for (i = 0; i < linklist.length(); ++i) {
                     JSONObject link = linklist.getJSONObject(i);
@@ -463,31 +478,24 @@ public class Schedule {
                     slink.setType(link.optString("type", null));
                     links.addLast(slink);
                 }
-
-                //Adding website separately because it is not in social_links
-                if (conference.has("event_url")) {
-                    Schedule.Link slink = new Link(conference.getString("event_url"), "Website");
-                    links.addLast(slink);
-                }
-
-
-                //Adding website separately because it is not in social_links
-                if (conference.has("ticket_url")) {
-                    Schedule.Link slink = new Link(conference.getString("ticket_url"), "Ticket URL");
-                    links.addLast(slink);
-                }
-
             }
 
-            //Getting microlocations to add latitude and longitude
-            JSONArray microlocations = conference.getJSONArray("microlocations");
 
-            //An array of pairs to have locations as key and latitude and longitude as value
-            HashMap<String, String> locs = new HashMap<>();
-            for (i = 0; i < microlocations.length(); i++) {
+            if (conference.has("microlocations")) {
 
-                JSONObject room = microlocations.getJSONObject(i);
-                locs.put(room.getString("name"), room.getString("longitude") + "," + room.getString("latitude"));
+                /*Changing the flag after checking the organizer is using with microlocations
+				options enabled*/
+
+                hasMicrolocs = true;
+
+                //Getting microlocations to add latitude and longitude
+                JSONArray microlocations = conference.getJSONArray("microlocations");
+
+                for (i = 0; i < microlocations.length(); i++) {
+
+                    JSONObject room = microlocations.getJSONObject(i);
+                    locs.put(room.getString("name"), room.getString("longitude") + "," + room.getString("latitude"));
+                }
             }
 
 
@@ -501,7 +509,7 @@ public class Schedule {
                 String title = event.getString("title");
 
                 /*Our date format is different and I changed getTimeInMillis() a bit to ignore "+08"
-                in second part to avoid error in integer parsing*/
+				in second part to avoid error in integer parsing*/
                 String startTimeS = event.getString("start_time");
                 String endTimeS = event.getString("end_time");
                 Date startTime, endTime;
@@ -514,6 +522,7 @@ public class Schedule {
                     item.addLink(new Link(event.getString("signup_url")));
                 }
 
+
                 JSONObject microlocation = event.getJSONObject("microlocation");
                 String location = microlocation.getString("name");
 
@@ -523,24 +532,28 @@ public class Schedule {
                     tentMap.put(location, line);
                 }
 
+
                 //Getting value (latitude and longitude) from the map by key (name)
-                String locString = locs.get(line.getTitle());
-                String latitude = locString.substring(0, locString.indexOf(','));
-                String longitude = locString.substring(locString.indexOf(',') + 1);
 
-                //Adding location details here
-                String latlon = null;
-                try {
-                    latlon = ("geo:0,0?q=" + longitude + "," +
-                            latitude + "(" +
-                            URLEncoder.encode(line.getTitle(), "utf-8") + ")");
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+                if (hasMicrolocs) {
+                    String locString = locs.get(line.getTitle());
+                    String latitude = locString.substring(0, locString.indexOf(','));
+                    String longitude = locString.substring(locString.indexOf(',') + 1);
+
+                    //Adding location details here
+                    String latlon = null;
+                    try {
+                        latlon = ("geo:0,0?q=" + longitude + "," +
+                                latitude + "(" +
+                                URLEncoder.encode(line.getTitle(), "utf-8") + ")");
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
 
 
-                if (latlon != null) {
-                    line.setLocation(latlon);
+                    if (latlon != null) {
+                        line.setLocation(latlon);
+                    }
                 }
 
                 line.addItem(item);
@@ -548,6 +561,7 @@ public class Schedule {
 
         } catch (JSONException e) {
             e.printStackTrace();
+            throw new LoadException("Parse error: " + e);
         }
     }
 
