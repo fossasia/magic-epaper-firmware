@@ -1,5 +1,5 @@
 {
-	"version": 2017061400,
+	"version": 2017062300,
 	"schedules": [
 		{
 			"version": 2016062701,
@@ -370,12 +370,13 @@
 			}
 		},
 		{
-			"version": 2017060900,
+			"version": 2017062300,
 			"url": "http://www.tuebix.org/2017/giggity.xml",
 			"title": "TUEBIX 2017",
 			"start": "2017-06-24",
 			"end": "2017-06-24",
 			"metadata": {
+				"icon": "http://www.tuebix.org/2017/giggity.icon.png",
 				"links": [
 					{
 						"url": "http://www.tuebix.org/",
