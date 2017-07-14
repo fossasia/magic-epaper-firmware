@@ -1,5 +1,5 @@
 {
-	"version": 2017062300,
+	"version": 2017071200,
 	"schedules": [
 		{
 			"version": 2016062701,
@@ -407,6 +407,22 @@
 					}
 				]
 			}
+		},
+		{
+			"title" : "GUADEC 2017",
+			"metadata" : {
+				"icon" : "https://static.gnome.org/guadec-2017/icon1.png",
+				"links" : [
+					{
+						"url" : "https://www.guadec.org/",
+						"title" : "Website"
+					}
+				]
+			},
+			"url" : "https://static.gnome.org/guadec-2017/schedule.xml",
+			"start" : "2017-07-28",
+			"end" : "2017-07-30",
+			"version" : 2017071200
 		}
 	]
 }

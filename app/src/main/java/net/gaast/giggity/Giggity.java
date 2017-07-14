@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.View;
 
 import java.io.IOException;
@@ -186,7 +187,11 @@ public class Giggity extends Application {
 		}
 	}
 
-	static boolean fuzzyStarsWith(String prefix, String full) {
+	static boolean fuzzyStartsWith(String prefix, String full) {
+		if (prefix == null || full == null) {
+			Log.e("fuzzyStartsWith", "Called with null argument.");
+			return false;
+		}
 		prefix = prefix.replaceAll("<[^>]*>", "").replaceAll("[^A-Za-z0-9]", "").toLowerCase();
 		full = full.replaceAll("<[^>]*>", "").replaceAll("[^A-Za-z0-9]", "").toLowerCase();
 		return full.startsWith(prefix);

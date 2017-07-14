@@ -24,7 +24,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
-import android.support.v4.util.Pair;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
@@ -77,17 +76,21 @@ import java.util.zip.Inflater;
 @SuppressLint("SimpleDateFormat")
 public class Schedule {
     private final int detectHeaderSize = 1024;
-    LinkedList<Date> dayList;
+
     private Giggity app;
     private Db.Connection db;
+
     private String id, url;
     private String title;
-    private LinkedList<Schedule.Line> tents = new LinkedList<>();
-    private TreeMap<String, Schedule.Item> allItems;
-    private HashMap<String, TreeSet<Schedule.Item>> trackMap;
+
+    private LinkedList<Schedule.Line> tents;
+    private TreeMap<String,Schedule.Item> allItems;
+    private HashMap<String,TreeSet<Schedule.Item>> trackMap;
+
     private Date firstTime, lastTime;
     private Date curDay, curDayEnd;
     private Date dayChange;
+    LinkedList<Date> dayList;
     private boolean showHidden;  // So hidden items are shown but with a different colour.
 
     private HashSet<String> languages;
@@ -103,6 +106,17 @@ public class Schedule {
     private boolean fullyLoaded;
     private Handler progressHandler;
 
+    public class LoadException extends RuntimeException {
+        public LoadException(String description) {
+            super(description);
+        }
+
+        // Slightly cleaner without the "FooException:" prefix for ones that are custom anyway.
+        public String toString() {
+            return getMessage();
+        }
+    }
+
     public Schedule(Giggity ctx) {
         app = ctx;
     }
@@ -110,26 +124,16 @@ public class Schedule {
     public static String hashify(String url) {
         String ret = "";
         try {
-            /* md5, sha1... small diff I guess? (No clue how this evolved!) */
+			/* md5, sha1... small diff I guess? (No clue how this evolved!) */
             MessageDigest md5 = MessageDigest.getInstance("SHA-1");
             md5.update(url.getBytes());
             byte raw[] = md5.digest();
-            for (int i = 0; i < raw.length; i++)
+            for (int i = 0; i < raw.length; i ++)
                 ret += String.format("%02x", raw[i]);
         } catch (NoSuchAlgorithmException e) {
             // WTF
         }
         return ret;
-    }
-
-    @Deprecated
-    static String rewrap(String desc) {
-        /* Replace newlines with spaces unless there are two of them,
-         * or if the following line starts with a character. */
-        if (desc != null)
-            return desc.replace("\r", "").replaceAll("([^\n]) *\n *([a-zA-Z0-9])", "$1 $2");
-        else
-            return null;
     }
 
     public LinkedList<Date> getDays() {
@@ -138,8 +142,8 @@ public class Schedule {
             day.setTime(firstTime);
             day.set(Calendar.HOUR_OF_DAY, dayChange.getHours());
             day.set(Calendar.MINUTE, dayChange.getMinutes());
-            /* Add a day 0 (maybe there's an event before the first day officially
-             * starts?). Saw this in the CCC Fahrplan for example. */
+			/* Add a day 0 (maybe there's an event before the first day officially
+			 * starts?). Saw this in the CCC Fahrplan for example. */
             if (day.getTime().after(firstTime))
                 day.add(Calendar.DATE, -1);
 
@@ -149,7 +153,7 @@ public class Schedule {
 
             dayList = new LinkedList<Date>();
             while (day.getTime().before(lastTime)) {
-                /* Some schedules have empty days in between. :-/ Skip those. */
+				/* Some schedules have empty days in between. :-/ Skip those. */
                 for (Schedule.Item item : allItems.values()) {
                     if (item.getStartTime().compareTo(day.getTime()) >= 0 &&
                             item.getEndTime().compareTo(dayEnd.getTime()) <= 0) {
@@ -164,9 +168,7 @@ public class Schedule {
         return dayList;
     }
 
-    /**
-     * Total duration of this event in seconds.
-     */
+    /** Total duration of this event in seconds. */
     public long eventLength() {
         return (lastTime.getTime() - firstTime.getTime()) / 1000;
     }
@@ -198,9 +200,7 @@ public class Schedule {
             return new SimpleDateFormat("EE");
     }
 
-    /**
-     * Get earliest item.startTime
-     */
+    /** Get earliest item.startTime */
     public Date getFirstTime() {
         if (curDay == null)
             return firstTime;
@@ -217,9 +217,7 @@ public class Schedule {
         return ret;
     }
 
-    /**
-     * Get highest item.endTime
-     */
+    /** Get highest item.endTime */
     public Date getLastTime() {
         if (curDay == null)
             return lastTime;
@@ -254,7 +252,7 @@ public class Schedule {
         id = null;
         title = null;
 
-        allItems = new TreeMap<String, Schedule.Item>();
+        allItems = new TreeMap<String,Schedule.Item>();
         tents = new LinkedList<Schedule.Line>();
         trackMap = null; /* Only assign if we have track info. */
         languages = new HashSet<>();
@@ -276,7 +274,7 @@ public class Schedule {
 
         String head;
         Fetcher f = null;
-        final BufferedReader in;
+        BufferedReader in;
 
         try {
             f = app.fetch(url, source);
@@ -300,7 +298,7 @@ public class Schedule {
         }
 
 		/* Yeah, I know this is ugly, and actually reasonably fragile. For now it
-         * just seems somewhat more efficient than doing something smarter, and
+		 * just seems somewhat more efficient than doing something smarter, and
 		 * I want to avoid doing XML-specific stuff here already. */
         try {
             if (head.contains("<icalendar") && head.contains("<vcalendar")) {
@@ -374,8 +372,8 @@ public class Schedule {
     }
 
     private void loadIcal(BufferedReader in) {
-        /* Luckily the structure of iCal maps pretty well to its xCal counterpart.
-         * That's what this function does.
+		/* Luckily the structure of iCal maps pretty well to its xCal counterpart.
+		 * That's what this function does.
 		 * Tested against http://yapceurope.lv/ye2011/timetable.ics and the FOSDEM
 		 * 2011 iCal export (but please don't use this unless the event offers
 		 * nothing else). */
@@ -387,7 +385,7 @@ public class Schedule {
                 s = in.readLine();
                 if (s != null && s.startsWith(" ")) {
                     line += s.substring(1);
-                    /* Line continuation. Get the rest before we process anything. */
+					/* Line continuation. Get the rest before we process anything. */
                     continue;
                 } else if (line.contains(":")) {
                     String split[] = line.split(":", 2);
@@ -395,8 +393,8 @@ public class Schedule {
                     key = split[0].toLowerCase();
                     value = split[1];
                     if (key.equals("begin")) {
-                        /* Some blocks (including vevent, the only one we need)
-                         * have proper begin:vevent and end:vevent dividers. */
+						/* Some blocks (including vevent, the only one we need)
+						 * have proper begin:vevent and end:vevent dividers. */
                         p.startElement("", value.toLowerCase(), "", null);
                     } else if (key.equals("end")) {
                         p.endElement("", value.toLowerCase(), "");
@@ -428,8 +426,9 @@ public class Schedule {
 
     /*Reading the JSON open event format data fetched from the API end point*/
     private void loadJson(BufferedReader in) {
+
         StringBuffer buffer = new StringBuffer();
-        SimpleDateFormat df = new SimpleDateFormat();
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         HashMap<String, Schedule.Line> tentMap = new HashMap<String, Schedule.Line>();
         Boolean hasMicrolocs = false;
         Scanner s = new Scanner(in);
@@ -483,7 +482,7 @@ public class Schedule {
 
             if (conference.has("microlocations")) {
 
-                /*Changing the flag after checking the organizer is using with microlocations
+				/*Changing the flag after checking the organizer is using with microlocations
 				options enabled*/
 
                 hasMicrolocs = true;
@@ -508,20 +507,31 @@ public class Schedule {
                 String uid = event.getString("id");
                 String title = event.getString("title");
 
-                /*Our date format is different and I changed getTimeInMillis() a bit to ignore "+08"
+				/*Our date format is different and I changed getTimeInMillis() a bit to ignore "+08"
 				in second part to avoid error in integer parsing*/
                 String startTimeS = event.getString("start_time");
                 String endTimeS = event.getString("end_time");
                 Date startTime, endTime;
-                startTime = new Date(getTimeInMillis(startTimeS));
-                endTime = new Date(getTimeInMillis(endTimeS));
+
+                if (startTimeS.contains("+")) {
+                    startTimeS = startTimeS.substring(0, startTimeS.lastIndexOf('+'));
+                }
+                startTimeS = startTimeS.substring(0, startTimeS.lastIndexOf('-'));
+
+                if (endTimeS.contains("+")) {
+                    endTimeS = endTimeS.substring(0, endTimeS.lastIndexOf('+'));
+                }
+                endTimeS = endTimeS.substring(0, endTimeS.lastIndexOf('-'));
+
+                startTime = df.parse(startTimeS);
+                endTime = df.parse(endTimeS);
+
                 Schedule.Item item = new Schedule.Item(uid, title, startTime, endTime);
                 item.setDescription(event.getString("long_abstract"));
 
                 if (event.getString("signup_url") != "null") {
                     item.addLink(new Link(event.getString("signup_url")));
                 }
-
 
                 JSONObject microlocation = event.getJSONObject("microlocation");
                 String location = microlocation.getString("name");
@@ -532,10 +542,9 @@ public class Schedule {
                     tentMap.put(location, line);
                 }
 
-
                 //Getting value (latitude and longitude) from the map by key (name)
 
-                if (hasMicrolocs) {
+                if (hasMicrolocs && line.getTitle()!=null && !line.getTitle().equals("")) {
                     String locString = locs.get(line.getTitle());
                     String latitude = locString.substring(0, locString.indexOf(','));
                     String longitude = locString.substring(locString.indexOf(',') + 1);
@@ -562,37 +571,13 @@ public class Schedule {
         } catch (JSONException e) {
             e.printStackTrace();
             throw new LoadException("Parse error: " + e);
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
     }
 
-    private long getTimeInMillis(String timeString) {
-        GregorianCalendar calender = new GregorianCalendar();
-        String[] DateTime = new String[2];
-        String[] Date = new String[3];
-        String[] Time = new String[3];
-        DateTime = timeString.split("T");
-        Date = DateTime[0].split("-");
-        Time = DateTime[1].split(":");
-
-        //To avoid error in open event JSON format
-        if (Time[2].contains("+")) {
-            Time[2] = Time[2].substring(0, Time[2].indexOf('+'));
-        }
-
-        int year = Integer.parseInt(Date[0]);
-        int month = Integer.parseInt(Date[1]);
-        int date = Integer.parseInt(Date[2]);
-        int hour = Integer.parseInt(Time[0]);
-        int min = Integer.parseInt(Time[1]);
-        int sec = Integer.parseInt(Time[2]);
-        calender.set(year, month, date, hour, min, sec);
-        return calender.getTimeInMillis();
-    }
-
-    /**
-     * OOB metadata related to schedule but separately supplied by BitlBee (it's non-standard) gets merged here.
-     * I should see whether I could get support for this kind of data into the Pentabarf format.
-     */
+    /** OOB metadata related to schedule but separately supplied by BitlBee (it's non-standard) gets merged here.
+     I should see whether I could get support for this kind of data into the Pentabarf format. */
     private void addMetadata(String md_json) {
         if (md_json == null)
             return;
@@ -662,10 +647,8 @@ public class Schedule {
         }
     }
 
-    /**
-     * Would like to kill this, but still used for remembering currently
-     * viewed day for a schedule.
-     */
+    /** Would like to kill this, but still used for remembering currently
+     * viewed day for a schedule. */
     public Db.Connection getDb() {
         return db;
     }
@@ -757,7 +740,7 @@ public class Schedule {
                         d += i + " ";
                 d = d.toLowerCase();
                 int i;
-                for (i = 0; i < q.length; i++) {
+                for (i = 0; i < q.length; i ++) {
                     if (!d.contains(q[i]))
                         break;
                 }
@@ -773,16 +756,14 @@ public class Schedule {
         return links;
     }
 
-    public Collection<String> getLanguages() {
-        return languages;
+    public Collection<String> getLanguages() { return languages; }
+
+    public void setShowHidden(boolean showHidden) {
+        this.showHidden = showHidden;
     }
 
     public boolean getShowHidden() {
         return showHidden;
-    }
-
-    public void setShowHidden(boolean showHidden) {
-        this.showHidden = showHidden;
     }
 
     public String getIconUrl() {
@@ -836,206 +817,6 @@ public class Schedule {
             return BitmapFactory.decodeStream(stream);
         } else {
             return null;
-        }
-    }
-
-    public Selections getSelections() {
-        boolean empty = true;
-        Selections ret = new Selections(this);
-
-        for (Item item : allItems.values()) {
-            int t = 0;
-            if (item.getRemind())
-                t += 1;
-            if (item.isHidden())
-                t += 2;
-            if (t > 0)
-                empty = false;
-            ret.selections.put(item.getId(), t);
-        }
-
-		/* Don't generate anything if there is nothing worth exporting. */
-        if (empty)
-            return null;
-
-        return ret;
-    }
-
-    public void setSelections(Selections sel, CheckBox[] cbs) {
-        if (!cbs[ScheduleUI.ImportSelections.KEEP_REMIND].isChecked()) {
-            for (Item item : allItems.values()) {
-                item.setRemind(false);
-            }
-        }
-        if (!cbs[ScheduleUI.ImportSelections.KEEP_HIDDEN].isChecked()) {
-            for (Item item : allItems.values()) {
-                item.setHidden(false);
-            }
-        }
-        if (cbs[ScheduleUI.ImportSelections.IMPORT_REMIND].isChecked()) {
-            for (String id : sel.selections.keySet()) {
-                if ((sel.selections.get(id) & 1) > 0) {
-                    Item item = allItems.get(id);
-                    if (item != null)
-                        item.setRemind(true);
-                }
-            }
-        }
-        if (cbs[ScheduleUI.ImportSelections.IMPORT_REMIND].isChecked()) {
-            for (String id : sel.selections.keySet()) {
-                if ((sel.selections.get(id) & 2) > 0) {
-                    Item item = allItems.get(id);
-                    if (item != null)
-                        item.setHidden(true);
-                }
-            }
-        }
-    }
-
-    static public class Selections implements Serializable {
-        public String url;
-        public HashMap<String, Integer> selections;
-
-        public Selections(Schedule sched) {
-            url = sched.getUrl();
-            selections = new HashMap<String, Integer>();
-        }
-
-        public Selections(byte[] in) throws DataFormatException {
-            if (in == null || in[0] != 0x01)
-                throw new DataFormatException("Magic number missing");
-
-            Inflater unc = new Inflater();
-            unc.setInput(in, 1, in.length - 1);
-            byte[] orig = new byte[in.length * 10];
-            int len = unc.inflate(orig);
-
-            ByteArrayInputStream rd = new ByteArrayInputStream(orig, 0, len);
-
-            len = rd.read() * 0x100 + rd.read();
-            byte[] urlb = new byte[len];
-            if (rd.read(urlb, 0, len) != len)
-                throw new DataFormatException("Ran out of data while reading URL");
-            try {
-                url = new String(urlb, "utf-8");
-                Log.d("Selections.url", url);
-            } catch (UnsupportedEncodingException e) {
-            }
-
-            selections = new HashMap<String, Integer>();
-            while (rd.available() > 4) {
-                int type = rd.read();
-
-                if (type > 0x03) {
-                    Log.w("Schedule.Selections", "Discarding unknown bits in type: " + type);
-                    type &= 0x03;
-                }
-                Log.d("Selections.type", "" + type);
-
-                int i, n = rd.read() * 0x100 + rd.read();
-                for (i = 0; i < n; i++) {
-                    len = rd.read();
-                    if (len == -1 || rd.available() < len)
-                        throw new DataFormatException("Ran out of data while reading ID");
-
-                    byte[] idb = new byte[len];
-                    rd.read(idb, 0, len);
-                    String id;
-                    try {
-                        id = new String(idb, "utf-8");
-                    } catch (UnsupportedEncodingException e) {
-                        continue;
-                    }
-                    selections.put(id, type);
-                    Log.d("Selections.id", id);
-                }
-            }
-        }
-
-        /* Export all selections/deletions/etc in a byte array. Should export this to other devices
-         * using QR codes. The format is pretty simple, see the comments. It's zlib-compressed to
-         * hopefully keep it small enough for a QR rendered on a phone. */
-        public byte[] export() {
-            LinkedList<String> sels[] = (LinkedList<String>[]) new LinkedList[4];
-            int i;
-
-            for (i = 0; i < 4; i++)
-                sels[i] = new LinkedList<String>();
-
-            for (String id : selections.keySet()) {
-                int t = selections.get(id);
-                sels[t].add(id);
-            }
-
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            try {
-				/* Length of URL, 16 bits network order */
-                byte[] urlb = url.getBytes("utf-8");
-                out.write(urlb.length >> 8);
-                out.write(urlb.length & 0xff);
-                out.write(urlb);
-                for (i = 1; i < 4; i++) {
-                    if (sels[i].size() == 0)
-                        continue;
-
-					/* Type. Bitfield. 1 == remember, 2 == hide */
-                    out.write(i);
-					/* Number of items, 16 bits network order */
-                    out.write(sels[i].size() >> 8);
-                    out.write(sels[i].size() & 0xff);
-                    for (String item : sels[i]) {
-                        byte[] id = item.getBytes("utf-8");
-                        if (id.length > 255) {
-							/* Way too long. Forget it. :-/ */
-                            out.write(0);
-                            Log.e("Schedule.getSelections", "Ridiculously long item id: " + item);
-                        } else {
-                            out.write(id.length);
-                            out.write(id);
-                        }
-                    }
-                }
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-
-			/* UGH. Raw arrays in Java. :-( "I just want to compress 200 bytes of data..." */
-            Deflater z = new Deflater(Deflater.BEST_COMPRESSION);
-            z.setInput(out.toByteArray());
-            z.finish();
-            byte[] ret1 = new byte[out.size() * 2 + 100];
-            byte[] ret2 = new byte[z.deflate(ret1) + 1];
-			/* "Version" number. Keep it outside the compressed bit because zlib doesn't have magic numbers.
-			 * I'll use this instead. I mostly need it to separate scanned URL QR codes from this binary data
-			 * so one byte like this is enough. */
-            ret2[0] = 0x01;
-            for (i = 0; i < ret2.length - 1; i++)
-                ret2[i + 1] = ret1[i];
-
-            return ret2;
-        }
-
-        public int countBit(int bit) {
-            int ret = 0;
-
-            for (Integer t : selections.values()) {
-                if ((t & bit) > 0)
-                    ret++;
-            }
-            return ret;
-        }
-    }
-
-    public class LoadException extends RuntimeException {
-        public LoadException(String description) {
-            super(description);
-        }
-
-        // Slightly cleaner without the "FooException:" prefix for ones that are custom anyway.
-        public String toString() {
-            return getMessage();
         }
     }
 
@@ -1134,13 +915,14 @@ public class Schedule {
     }
 
     private class XcalParser implements ContentHandler {
-        SimpleDateFormat dfUtc, dfLocal;
-        private HashMap<String, Schedule.Line> tentMap;
-        private HashMap<String, String> eventData;
+        private HashMap<String,Schedule.Line> tentMap;
+        private HashMap<String,String> eventData;
         private String curString;
 
+        SimpleDateFormat dfUtc, dfLocal;
+
         public XcalParser() {
-            tentMap = new HashMap<String, Schedule.Line>();
+            tentMap = new HashMap<String,Schedule.Line>();
             dfUtc = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
             dfUtc.setTimeZone(TimeZone.getTimeZone("UTC"));
             dfLocal = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
@@ -1267,14 +1049,15 @@ public class Schedule {
      */
     @SuppressWarnings("deprecation")
     private class PentabarfParser implements ContentHandler {
-        SimpleDateFormat df, tf;
         private Schedule.Line curTent;
-        private HashMap<String, Schedule.Line> tentMap;
-        private HashMap<String, String> propMap;
+        private HashMap<String,Schedule.Line> tentMap;
+        private HashMap<String,String> propMap;
         private String curString;
         private LinkedList<String> persons;
         private LinkedList<Link> links;
         private Date curDay;
+
+        SimpleDateFormat df, tf;
 
         public PentabarfParser() {
             tentMap = new HashMap<>();
@@ -1288,7 +1071,7 @@ public class Schedule {
                                  Attributes atts) throws SAXException {
             curString = "";
             if (localName.equals("conference") || localName.equals("event")) {
-                propMap = new HashMap<String, String>();
+                propMap = new HashMap<String,String>();
                 propMap.put("id", atts.getValue("id"));
 
                 links = new LinkedList<>();
@@ -1387,7 +1170,8 @@ public class Schedule {
                 // TODO: IMHO the separation between these two is not used in a meaningful way my most,
                 // or worse, description is just a copy of abstract. Some heuristics would be helpful.
                 if ((s = propMap.get("abstract")) != null &&
-                        !Giggity.fuzzyStarsWith(propMap.get("abstract"), propMap.get("description"))) {
+                        (!propMap.containsKey("description") ||
+                                !Giggity.fuzzyStartsWith(propMap.get("abstract"), propMap.get("description")))) {
                     s = s.replaceAll("\n*$", "");
                     desc += s + "\n\n";
                 }
@@ -1464,11 +1248,11 @@ public class Schedule {
     }
 
     public class Line {
-        Schedule schedule;
         private String id;
         private String title;
         private TreeSet<Schedule.Item> items;
         private String location;  // geo: URL (set by metadata loader)
+        Schedule schedule;
 
         public Line(String id_, String title_) {
             id = id_;
@@ -1557,6 +1341,25 @@ public class Schedule {
             return Schedule.this;
         }
 
+        public void setTrack(String track_) {
+            track = track_;
+
+            if (trackMap == null)
+                trackMap = new HashMap<String,TreeSet<Schedule.Item>>();
+
+            TreeSet<Schedule.Item> items;
+            if ((items = trackMap.get(track)) == null) {
+                items = new TreeSet<Schedule.Item>();
+                trackMap.put(track, items);
+            }
+
+            items.add(this);
+        }
+
+        public void setDescription(String description_) {
+            description = description_.trim();
+        }
+
         public void addLink(Schedule.Link link) {
             if (links == null) {
                 links = new LinkedList<Schedule.Link>();
@@ -1573,6 +1376,14 @@ public class Schedule {
                 speakers = new LinkedList<String>();
             }
             speakers.add(name);
+        }
+
+        public void setLanguage(String lang) {
+            if (lang != null && !lang.isEmpty()) {
+                language = lang;
+            } else {
+                language = null;
+            }
         }
 
         public String getId() {
@@ -1607,27 +1418,8 @@ public class Schedule {
             return track;
         }
 
-        public void setTrack(String track_) {
-            track = track_;
-
-            if (trackMap == null)
-                trackMap = new HashMap<String, TreeSet<Schedule.Item>>();
-
-            TreeSet<Schedule.Item> items;
-            if ((items = trackMap.get(track)) == null) {
-                items = new TreeSet<Schedule.Item>();
-                trackMap.put(track, items);
-            }
-
-            items.add(this);
-        }
-
         public String getDescription() {
             return description;
-        }
-
-        public void setDescription(String description_) {
-            description = description_.trim();
         }
 
         public String getDescriptionStripped() {
@@ -1641,14 +1433,6 @@ public class Schedule {
 
         public String getLanguage() {
             return language;
-        }
-
-        public void setLanguage(String lang) {
-            if (lang != null && !lang.isEmpty()) {
-                language = lang;
-            } else {
-                language = null;
-            }
         }
 
         private String descriptionMarkdownHack(String md) {
@@ -1698,20 +1482,16 @@ public class Schedule {
             return speakers;
         }
 
-        public Line getLine() {
-            return line;
-        }
-
         public void setLine(Line line_) {
             line = line_;
         }
 
-        public LinkedList<Schedule.Link> getLinks() {
-            return links;
+        public Line getLine() {
+            return line;
         }
 
-        public boolean getRemind() {
-            return remind;
+        public LinkedList<Schedule.Link> getLinks() {
+            return links;
         }
 
         public void setRemind(boolean remind_) {
@@ -1722,8 +1502,8 @@ public class Schedule {
             }
         }
 
-        public boolean isHidden() {
-            return hidden;
+        public boolean getRemind() {
+            return remind;
         }
 
         public void setHidden(boolean hidden) {
@@ -1733,8 +1513,8 @@ public class Schedule {
             }
         }
 
-        public int getStars() {
-            return stars;
+        public boolean isHidden() {
+            return hidden;
         }
 
         public void setStars(int stars_) {
@@ -1742,6 +1522,10 @@ public class Schedule {
                 stars = stars_;
                 newData |= fullyLoaded;
             }
+        }
+
+        public int getStars() {
+            return stars;
         }
 
         public void commit() {
@@ -1817,6 +1601,202 @@ public class Schedule {
 
         public void setType(String type) {
             this.type = type;
+        }
+    }
+
+    @Deprecated
+    static String rewrap(String desc) {
+		/* Replace newlines with spaces unless there are two of them,
+		 * or if the following line starts with a character. */
+        if (desc != null)
+            return desc.replace("\r", "").replaceAll("([^\n]) *\n *([a-zA-Z0-9])", "$1 $2");
+        else
+            return null;
+    }
+
+    public Selections getSelections() {
+        boolean empty = true;
+        Selections ret = new Selections(this);
+
+        for (Item item : allItems.values()) {
+            int t = 0;
+            if (item.getRemind())
+                t += 1;
+            if (item.isHidden())
+                t += 2;
+            if (t > 0)
+                empty = false;
+            ret.selections.put(item.getId(), t);
+        }
+
+		/* Don't generate anything if there is nothing worth exporting. */
+        if (empty)
+            return null;
+
+        return ret;
+    }
+
+    public void setSelections(Selections sel, CheckBox[] cbs) {
+        if (!cbs[ScheduleUI.ImportSelections.KEEP_REMIND].isChecked()) {
+            for (Item item : allItems.values()) {
+                item.setRemind(false);
+            }
+        }
+        if (!cbs[ScheduleUI.ImportSelections.KEEP_HIDDEN].isChecked()) {
+            for (Item item : allItems.values()) {
+                item.setHidden(false);
+            }
+        }
+        if (cbs[ScheduleUI.ImportSelections.IMPORT_REMIND].isChecked()) {
+            for (String id : sel.selections.keySet()) {
+                if ((sel.selections.get(id) & 1) > 0) {
+                    Item item = allItems.get(id);
+                    if (item != null)
+                        item.setRemind(true);
+                }
+            }
+        }
+        if (cbs[ScheduleUI.ImportSelections.IMPORT_REMIND].isChecked()) {
+            for (String id : sel.selections.keySet()) {
+                if ((sel.selections.get(id) & 2) > 0) {
+                    Item item = allItems.get(id);
+                    if (item != null)
+                        item.setHidden(true);
+                }
+            }
+        }
+    }
+
+    static public class Selections implements Serializable {
+        public String url;
+        public HashMap<String,Integer> selections;
+
+        public Selections(Schedule sched) {
+            url = sched.getUrl();
+            selections = new HashMap<String,Integer>();
+        }
+
+        public Selections(byte[] in) throws DataFormatException {
+            if (in == null || in[0] != 0x01)
+                throw new DataFormatException("Magic number missing");
+
+            Inflater unc = new Inflater();
+            unc.setInput(in, 1, in.length - 1);
+            byte[] orig = new byte[in.length * 10];
+            int len = unc.inflate(orig);
+
+            ByteArrayInputStream rd = new ByteArrayInputStream(orig, 0, len);
+
+            len = rd.read() * 0x100 + rd.read();
+            byte[] urlb = new byte[len];
+            if (rd.read(urlb, 0, len) != len)
+                throw new DataFormatException("Ran out of data while reading URL");
+            try {
+                url = new String(urlb, "utf-8");
+                Log.d("Selections.url", url);
+            } catch (UnsupportedEncodingException e) {}
+
+            selections = new HashMap<String,Integer>();
+            while (rd.available() > 4) {
+                int type = rd.read();
+
+                if (type > 0x03) {
+                    Log.w("Schedule.Selections", "Discarding unknown bits in type: " + type);
+                    type &= 0x03;
+                }
+                Log.d("Selections.type", "" + type);
+
+                int i, n = rd.read() * 0x100 + rd.read();
+                for (i = 0; i < n; i ++) {
+                    len = rd.read();
+                    if (len == -1 || rd.available() < len)
+                        throw new DataFormatException("Ran out of data while reading ID");
+
+                    byte[] idb = new byte[len];
+                    rd.read(idb, 0, len);
+                    String id;
+                    try {
+                        id = new String(idb, "utf-8");
+                    } catch (UnsupportedEncodingException e) {continue;}
+                    selections.put(id, type);
+                    Log.d("Selections.id", id);
+                }
+            }
+        }
+
+        /* Export all selections/deletions/etc in a byte array. Should export this to other devices
+         * using QR codes. The format is pretty simple, see the comments. It's zlib-compressed to
+         * hopefully keep it small enough for a QR rendered on a phone. */
+        public byte[] export() {
+            LinkedList<String> sels[] = (LinkedList<String>[]) new LinkedList[4];
+            int i;
+
+            for (i = 0; i < 4; i ++)
+                sels[i] = new LinkedList<String>();
+
+            for (String id : selections.keySet()) {
+                int t = selections.get(id);
+                sels[t].add(id);
+            }
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try {
+				/* Length of URL, 16 bits network order */
+                byte[] urlb = url.getBytes("utf-8");
+                out.write(urlb.length >> 8);
+                out.write(urlb.length & 0xff);
+                out.write(urlb);
+                for (i = 1; i < 4; i ++) {
+                    if (sels[i].size() == 0)
+                        continue;
+
+					/* Type. Bitfield. 1 == remember, 2 == hide */
+                    out.write(i);
+					/* Number of items, 16 bits network order */
+                    out.write(sels[i].size() >> 8);
+                    out.write(sels[i].size() & 0xff);
+                    for (String item : sels[i]) {
+                        byte[] id = item.getBytes("utf-8");
+                        if (id.length > 255) {
+							/* Way too long. Forget it. :-/ */
+                            out.write(0);
+                            Log.e("Schedule.getSelections", "Ridiculously long item id: " + item);
+                        } else {
+                            out.write(id.length);
+                            out.write(id);
+                        }
+                    }
+                }
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+
+			/* UGH. Raw arrays in Java. :-( "I just want to compress 200 bytes of data..." */
+            Deflater z = new Deflater(Deflater.BEST_COMPRESSION);
+            z.setInput(out.toByteArray());
+            z.finish();
+            byte[] ret1 = new byte[out.size() * 2 + 100];
+            byte[] ret2 = new byte[z.deflate(ret1) + 1];
+			/* "Version" number. Keep it outside the compressed bit because zlib doesn't have magic numbers.
+			 * I'll use this instead. I mostly need it to separate scanned URL QR codes from this binary data
+			 * so one byte like this is enough. */
+            ret2[0] = 0x01;
+            for (i = 0; i < ret2.length - 1; i ++)
+                ret2[i+1] = ret1[i];
+
+            return ret2;
+        }
+
+        public int countBit(int bit) {
+            int ret = 0;
+
+            for (Integer t : selections.values()) {
+                if ((t & bit) > 0)
+                    ret ++;
+            }
+            return ret;
         }
     }
 }
