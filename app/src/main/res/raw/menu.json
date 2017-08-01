@@ -1,26 +1,6 @@
 {
-	"version": 2017071200,
+	"version": 2017072900,
 	"schedules": [
-		{
-			"version": 2016062701,
-			"url": "https://debconf16.debconf.org/schedule/pentabarf.xml",
-			"title": "DebConf16",
-			"start": "2016-07-04",
-			"end": "2016-07-09",
-			"metadata": {
-				"links": [
-					{
-						"url": "https://debconf16.debconf.org/",
-						"title": "Website"
-					},
-					{
-						"url": "https://debconf16.debconf.org/static/img/giggity-map.png",
-						"title": "Map",
-						"type": "image/png"
-					}
-				]
-			}
-		},
 		{
 			"id": "MOCA 2016",
 			"version": 2016072901,
@@ -83,38 +63,6 @@
 					{
 						"url": "https://2016.guadec.org/venue/",
 						"title": "Venue"
-					}
-				]
-			}
-		},
-		{
-			"version": 2016081902,
-			"url": "https://programm.froscon.de/2016/schedule.xml",
-			"title": "FrOSCon 2016",
-			"start": "2016-08-20",
-			"end": "2016-08-21",
-			"metadata": {
-				"links": [
-					{
-						"url": "http://www.froscon.org/",
-						"title": "Website"
-					},
-					{
-						"url": "https://www.froscon.de/fileadmin/user_upload/floorplan2016.pdf",
-						"title": "Map",
-						"type": "application/pdf"
-					},
-					{
-						"url": "https://www.froscon.de/en/news/",
-						"title": "News"
-					},
-					{
-						"url": "http://streaming.media.ccc.de/",
-						"title": "Streams"
-					},
-					{
-						"url": "http://froscon.tv/",
-						"title": "Recordings"
 					}
 				]
 			}
@@ -423,6 +371,60 @@
 			"start" : "2017-07-28",
 			"end" : "2017-07-30",
 			"version" : 2017071200
+		},
+		{
+			"version": 2017072400,
+			"url": "https://debconf17.debconf.org/schedule/pentabarf.xml",
+			"title": "DebConf17",
+			"start": "2017-08-05",
+			"end": "2017-08-12",
+			"metadata": {
+				"icon": "https://debconf17.debconf.org/static/img/favicon/favicon-180.ea5f30d24599.png",
+				"links": [
+					{
+						"url": "https://debconf17.debconf.org/",
+						"title": "Website"
+					},
+					{
+						"url": "https://wiki.debconf.org/wiki/DebConf17",
+						"title": "Wiki"
+					},
+					{
+						"url": "https://wiki.debconf.org/upload/8/88/DebConf17_venue_layout.png",
+						"title": "Map",
+						"type": "image/png"
+					},
+					{
+						"url": "https://debconf17.debconf.org/static/docs/welcome.pdf",
+						"title": "Welcome Guide",
+						"type": "application/pdf"
+					}
+				]
+			}
+		},
+		{
+			"version": 2017072900,
+			"url": "https://programm.froscon.de/2017/schedule.xml",
+			"title": "FrOSCon 2017",
+			"start": "2017-08-19",
+			"end": "2017-08-20",
+			"metadata": {
+				"icon": "https://ggt.gaa.st/froscon.png",
+				"links": [
+					{
+						"url": "http://www.froscon.org/",
+						"title": "Website"
+					},
+					{
+						"url": "https://www.froscon.de/en/news/",
+						"title": "News"
+					},
+					{
+						"url": "http://froscon.tv/",
+						"title": "Recordings"
+					}
+				]
+			}
 		}
 	]
 }

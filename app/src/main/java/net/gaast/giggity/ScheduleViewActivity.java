@@ -32,13 +32,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.net.UrlQuerySanitizer;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.TransactionTooLargeException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
@@ -57,6 +61,8 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.text.Format;
 import java.text.SimpleDateFormat;
@@ -802,6 +808,10 @@ public class ScheduleViewActivity extends Activity {
 	}
 
 	public void addHomeShortcut() {
+		addHomeShortcut(true);
+	}
+
+	private void addHomeShortcut(boolean with_icon) {
 		Intent shortcut = new Intent(Intent.ACTION_VIEW, Uri.parse(sched.getUrl()), this, ScheduleViewActivity.class);
 		/* Make sure no other activities/events are in the activity stack anymore if the user uses
 		   this shortcut as they're probably not interested in unrelated events at that point. */
@@ -810,14 +820,26 @@ public class ScheduleViewActivity extends Activity {
 		Intent intent = new Intent();
 		intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcut);
 		intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, sched.getTitle());
-		Bitmap bmp = sched.getIconBitmap();
-		if (bmp != null) {
-			intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, bmp);
-		} else {
+		Bitmap bmp = null;
+		if (with_icon) {
+			bmp = sched.getIconBitmap();
+			if (bmp != null) {
+				intent.putExtra(Intent.EXTRA_SHORTCUT_ICON, bmp);
+			}
+		}
+		if (bmp == null) {
 			intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(this, R.drawable.deoxide_icon));
 		}
 		intent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
-		sendBroadcast(intent);
+		try {
+			sendBroadcast(intent);
+		} catch (java.lang.RuntimeException e) {
+			if (e.getCause() instanceof android.os.TransactionTooLargeException) {
+				addHomeShortcut(false);
+			} else {
+				throw e;
+			}
+		}
 	}
 
 	public void onScroll() {
@@ -889,7 +911,7 @@ public class ScheduleViewActivity extends Activity {
 		public void show() {
 			if (sched == null || viewer == null || sched.getDays().size() <= 1 || viewer.multiDay())
 				return;
-			
+
 			/* Z ordering in RelativeLayouts seems to be most-recently-added,
 			 * so we have to keep bringing the buttons to front. :-/ */
 			this.bringToFront();
@@ -897,7 +919,7 @@ public class ScheduleViewActivity extends Activity {
 				setVisibility(View.VISIBLE);
 				days.setAnimation(AnimationUtils.loadAnimation(ScheduleViewActivity.this, android.R.anim.fade_in));
 			}
-			
+
 			/* Set a timer if we're now fading in the buttons, or reset it if
 			 * they're already on screen. */
 			h.removeCallbacks(hideEv);
