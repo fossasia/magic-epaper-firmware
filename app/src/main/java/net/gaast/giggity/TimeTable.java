@@ -66,7 +66,7 @@ public class TimeTable extends LinearLayout implements ScheduleViewer {
 			}
 		}
 		/* Ugly hack to get some empty space at the bottom of the list for nicer scrolling. */
-		fullList.add("\n\n\n\n\n\n\n\n");
+		fullList.add("\n\n\n\n\n");
 
 		RelativeLayout.LayoutParams lp;
 
@@ -84,6 +84,7 @@ public class TimeTable extends LinearLayout implements ScheduleViewer {
 		scroller = new ScheduleListView(ctx);
 		scroller.setCompact(true); /* Hide tent + day info, redundant in this view. */
 		scroller.setList(fullList);
+        scroller.setPadding(20,0,20,0);
 		lp = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 		addView(scroller, lp);
 

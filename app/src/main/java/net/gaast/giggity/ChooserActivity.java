@@ -267,11 +267,9 @@ public class ChooserActivity extends Activity implements SwipeRefreshLayout.OnRe
 	}
 
 	/* Process barcode scan results. This can be a few things:
-
 	   * Plain URL, in which case just handle it
 	   * zlib-compressed binary blob containing selection data exported by another Giggity
 	   * (gzip-compressed) JSON blob containing a menu.json entry
-
 	   We'll just have to figure out which one of the 3/4..
 	 */
 	@Override

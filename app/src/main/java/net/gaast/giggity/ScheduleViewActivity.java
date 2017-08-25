@@ -76,11 +76,11 @@ public class ScheduleViewActivity extends Activity {
 	protected Giggity app;
 
 	private final static int VIEWS[] = {
-		R.id.block_schedule,
-		R.id.timetable,
-		R.id.now_next,
-		R.id.my_events,
-		R.id.tracks,
+			R.id.block_schedule,
+			R.id.timetable,
+			R.id.now_next,
+			R.id.my_events,
+			R.id.tracks,
 	};
 
 	private int curView;
@@ -911,7 +911,7 @@ public class ScheduleViewActivity extends Activity {
 		public void show() {
 			if (sched == null || viewer == null || sched.getDays().size() <= 1 || viewer.multiDay())
 				return;
-			
+
 			/* Z ordering in RelativeLayouts seems to be most-recently-added,
 			 * so we have to keep bringing the buttons to front. :-/ */
 			this.bringToFront();
@@ -919,7 +919,7 @@ public class ScheduleViewActivity extends Activity {
 				setVisibility(View.VISIBLE);
 				days.setAnimation(AnimationUtils.loadAnimation(ScheduleViewActivity.this, android.R.anim.fade_in));
 			}
-			
+
 			/* Set a timer if we're now fading in the buttons, or reset it if
 			 * they're already on screen. */
 			h.removeCallbacks(hideEv);

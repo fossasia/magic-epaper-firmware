@@ -2,6 +2,7 @@ package net.gaast.giggity;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.text.TextUtils;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
