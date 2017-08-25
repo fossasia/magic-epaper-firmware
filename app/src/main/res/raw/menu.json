@@ -1,5 +1,5 @@
 {
-	"version": 2017072900,
+	"version": 2017080500,
 	"schedules": [
 		{
 			"id": "MOCA 2016",
@@ -338,7 +338,7 @@
 			}
 		},
 		{
-			"version": 2017061400,
+			"version": 2017080500,
 			"url": "https://program.sha2017.org/schedule.xml",
 			"title": "SHA2017",
 			"start": "2017-08-04",
@@ -348,6 +348,14 @@
 					{
 						"url": "https://sha2017.org/",
 						"title": "Website"
+					},
+					{
+						"url": "https://map.sha2017.org/",
+						"title": "Map"
+					},
+					{
+						"url": "https://volunteer.sha2017.org/",
+						"title": "Angels"
 					},
 					{
 						"url": "https://wiki.sha2017.org/w/Main_Page",

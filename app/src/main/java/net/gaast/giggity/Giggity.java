@@ -99,6 +99,15 @@ public class Giggity extends Application {
 		return scheduleCache.containsKey(url);
 	}
 	
+	public void flushSchedules() {
+		scheduleCache.clear();
+		/* I *think* this one's safe because alarms are still set and once the first rings, the
+		   schedule will get reloaded. May not go as well if the user is observing multiple
+		   schedules ATM but who does that..
+		 */
+		remindItems.clear();
+	}
+
 	public void flushSchedule(String url) {
 		if (hasSchedule(url)) {
 			Schedule sched = scheduleCache.get(url);

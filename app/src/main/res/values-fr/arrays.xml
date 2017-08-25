@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- See if refs to strings are possible here? -->
+	<string-array name="default_view">
+		<item>Grille</item>
+		<item>Horaires</item>
+		<item>Thèmes</item>
+		<item>À venir</item>
+		<item>Sélection</item>
+	</string-array>
+	<string-array name="font_size">
+		<item>Petite</item>
+		<item>3 lignes</item>
+		<item>2 lignes</item>
+	</string-array>
+	<!-- Eww, ordering a bit odd since tracks was added later. -->
+	<string-array name="default_view_values">
+		<item>net.gaast.giggity:id/block_schedule</item>
+		<item>net.gaast.giggity:id/timetable</item>
+		<item>net.gaast.giggity:id/tracks</item>
+		<item>net.gaast.giggity:id/now_next</item>
+		<item>net.gaast.giggity:id/my_events</item>
+	</string-array>
+	<string-array name="font_size_values">
+		<item>small</item>
+		<item>medium</item>
+		<item>large</item>
+	</string-array>
+	<string-array name="reminder_periods">
+		<item>1</item>
+		<item>5</item>
+		<item>10</item>
+		<item>15</item>
+	</string-array>
+	<string-array name="import_selections_options">
+	    <item>Conserver les rappels existants</item>
+		<item>Conserver les suppressions</item>
+		<item>Importer les nouveaux rappels</item>
+		<item>Importer les suppressions</item>
+	</string-array>
+</resources>
