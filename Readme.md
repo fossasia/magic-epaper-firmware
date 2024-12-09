@@ -25,4 +25,4 @@ For other displays, you can add support by modifying the display driver module.
 
 ## License
 
-This project is licensed under the Apache2 License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache2 License. See the [LICENSE](LICENSE.md) file for details.
