@@ -60,7 +60,6 @@ int main(void)
 	uc8253_init();
 	uc8253_clear_mem();
 	// uc8253_refresh_poll();
-	PRINT("init done\n");
 
 	while (1) {
 		exe_cmd();

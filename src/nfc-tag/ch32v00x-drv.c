@@ -71,13 +71,13 @@ void EXTI7_0_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void EXTI7_0_IRQHandler(void)
 {
 	__disable_irq();
-	if(EXTI_GetITStatus(EXTI_Line3))
+	if(EXTI_GetITStatus(EXTI_Line0))
 	{
 		printf("EXTI\n");
 		if (st25dv_has_rf_put_msg()) {
 			ntag_has_new_msg = 1;
 		}
-		EXTI_ClearITPendingBit(EXTI_Line3);
+		EXTI_ClearITPendingBit(EXTI_Line0);
 	}
 	__enable_irq();
 }
