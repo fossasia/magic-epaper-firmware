@@ -49,17 +49,17 @@ static void spi_init()
 
 static void setup_GPO()
 {
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOC, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOD, ENABLE);
 
 	GPIO_InitTypeDef p = {0};
-	p.GPIO_Pin = GPIO_Pin_3;
+	p.GPIO_Pin = GPIO_Pin_0; // changed to PD0 in the hardware
 	p.GPIO_Speed = GPIO_Speed_2MHz;
 	p.GPIO_Mode = GPIO_Mode_IPU;
-	GPIO_Init(GPIOC, &p);
+	GPIO_Init(GPIOD, &p);
 
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, 3);
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, 0);
 	EXTI_InitTypeDef ei = {0};
-	ei.EXTI_Line = EXTI_Line3;
+	ei.EXTI_Line = EXTI_Line0;
 	ei.EXTI_Mode = EXTI_Mode_Interrupt;
 	ei.EXTI_Trigger = EXTI_Trigger_Falling;
 	ei.EXTI_LineCmd = ENABLE;

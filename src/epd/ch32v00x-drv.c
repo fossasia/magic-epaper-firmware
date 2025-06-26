@@ -4,6 +4,7 @@
 
 #include "uc8253.h"
 #include "drv.h"
+#include "../mcu/debug.h"
 
 #define EPD_BUSY_PIN    GPIO_Pin_4 // pd4
 #define EPD_RST_PIN     GPIO_Pin_3 // pd3
@@ -63,7 +64,7 @@ void uc8253_init_hal()
 
 	// BUSY as input
 	iocfg.GPIO_Pin = EPD_BUSY_PIN;
-	iocfg.GPIO_Mode = GPIO_Mode_IPU;
+	iocfg.GPIO_Mode = GPIO_Mode_IPD;
 	GPIO_Init(GPIOD, &iocfg);
 
 	// CS as output

@@ -75,6 +75,8 @@ void uc8253_send_blk(uint8_t *bytes, uint16_t len)
 
 void uc8253_cmd(uint8_t cmd)
 {
+	PRINT(__func__);
+	PRINT("\n");
 	uc8253_switch2cmd();
 
 	uc8253_select();
@@ -92,6 +94,8 @@ void uc8253_cmd_params(uint8_t *cmd_and_params, uint16_t len)
 // wating for BUSY pin to release
 static void wait(void)
 {
+	PRINT(__func__);
+	PRINT("\n");
 	if (uc8253_is_busy())
 		PRINT("epd> wating.. ");
 	else return;
@@ -101,7 +105,7 @@ static void wait(void)
 		// uc8253_cmd(GET_STATUS);
 		delay_ms(100);
 	}
-	PRINT("released.\n");
+	printf("released.\n");
 }
 
 /**
@@ -161,6 +165,8 @@ void uc8253_clear_mem(void)
 
 void uc8253_refresh_poll()
 {
+	PRINT(__func__);
+	PRINT("\n");
 	uc8253_cmd(DISPLAY_REFRESH);
 	wait();
 }
