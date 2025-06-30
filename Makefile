@@ -158,10 +158,10 @@ $(BUILD_DIR):
 #######################################
 WCH_OPENOCD = ../MRS_Toolchain_Linux_x64_V1.92/OpenOCD/bin/openocd
 program: $(BUILD_DIR)/$(TARGET).elf 
-	sudo $(WCH_OPENOCD) -f /home/kein-fedora/PROJECTS/jobs/fossasia/epaper-badge/ch32v003-nfc/MRS_Toolchain_Linux_x64_V1.92/OpenOCD/bin/wch-riscv.cfg -c init -c halt -c "program $^ verify 0x00000000 verify reset exit" -c exit
+	../MRS_Toolchain_Linux_x64_V1.92/OpenOCD/bin/wch-riscv.cfg -c init -c halt -c "program $^ verify 0x00000000 verify reset exit" -c exit
 
 wlink: $(BUILD_DIR)/$(TARGET).bin
-	sudo ../../wlink-linux-x64/wlink flash --address 0x08000000 $(BUILD_DIR)/$(TARGET).bin
+	wlink flash --address 0x08000000 $(BUILD_DIR)/$(TARGET).bin
 
 isp: $(BUILD_DIR)/$(TARGET).bin
 	wchisp flash $(BUILD_DIR)/$(TARGET).bin
