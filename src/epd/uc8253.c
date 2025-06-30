@@ -175,20 +175,4 @@ void uc8253_init() {
 	uc8253_init_hal();
 
 	reset();
-
-	// uc8253_cmd(BOOSTER_SOFT_START); // boost soft start
-	// uc8253_send(0xc7); // smoothest
-	// uc8253_send(0xc7); // smoothest
-	// uc8253_send(0xc7); // smoothest
-
-	uc8253_cmd(POWER_ON);
-	wait();
-
-	uc8253_cmd(PANEL_SETTING);
-	uc8253_send(0b11001111); // 480x240
-	uc8253_send(0x8D); // default
-
-	uc8253_cmd(VCOM_AND_DATA_INTERVAL_SETTING);
-	uc8253_send(0b11111111);
-	uc8253_send(0x0f);
 }
