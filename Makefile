@@ -43,7 +43,6 @@ CH32V-EVT/Peripheral/src/ch32v00x_spi.c \
 CH32V-EVT/Peripheral/src/ch32v00x_flash.c \
 CH32V-EVT/Core/core_riscv.c \
 \
-src/main.c \
 src/mcu/ch32v00x-hal.c \
 src/mcu/ch32v00x-sys.c \
 src/mcu/ch32v00x-it.c \
@@ -52,10 +51,15 @@ src/epd/uc8253.c \
 src/epd/ch32v00x-drv.c \
 src/nfc-tag/st25dv.c \
 src/nfc-tag/ch32v00x-drv.c \
+\
+external/rv003usb/ch32v003fun/ch32fun/ch32fun.c \
+external/rv003usb/rv003usb/rv003usb.c \
+external/rv003usb/demo_hidapi/demo_hidapi.c \
 
 # ASM sources
 ASM_SOURCES =  \
-CH32V-EVT/Startup/startup_ch32v00x.S
+CH32V-EVT/Startup/startup_ch32v00x.S \
+external/rv003usb/rv003usb/rv003usb.s.S \
 
 #######################################
 # binaries
@@ -90,6 +94,11 @@ C_INCLUDES =  \
 -ICH32V-EVT/Peripheral/inc \
 -ICH32V-EVT/Debug \
 -ICH32V-EVT/Core \
+-Iinc \
+-Iexternal/rv003usb/ch32v003fun/ch32fun \
+-Iexternal/rv003usb/ch32v003fun/extralibs \
+-Iexternal/rv003usb/rv003usb \
+-Iexternal/rv003usb/lib \
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

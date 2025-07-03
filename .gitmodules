@@ -1,0 +1,3 @@
+[submodule "external/rv003usb"]
+	path = external/rv003usb
+	url = git@github.com:cnlohr/rv003usb.git
